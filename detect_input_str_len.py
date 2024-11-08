@@ -1,3 +1,7 @@
+# disable the pagination line that shows when script is ran in other ways that "source script" within gdb
+# has no effect if ran in gdb itself
+gdb.execute("set pagination off")
+
 # delete any previous breakpoints to prevent interference
 for bp in gdb.breakpoints():
     bp.delete()
