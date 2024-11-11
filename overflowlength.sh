@@ -13,11 +13,11 @@ fi
 
 if [ "$#" -eq 1 ]; then
     program=$1
-    gdb -ex "source detect_input_str_len.py" $program
+    gdb -ex "source detect_input_str_len.py" $program --args input
 fi
 
 if [ "$#" -eq 2 ]; then
     program=$1
     script=$2
-    gdb -ex "source $script" --args $program "$@" >/dev/null 2>&1
+    gdb -ex "source $script" --args $program input
 fi
