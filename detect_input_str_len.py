@@ -4,6 +4,9 @@ import re
 # has no effect if ran in gdb itself
 gdb.execute("set pagination off")
 
+gdb.execute("run < input")
+
+
 # delete any previous breakpoints to prevent interference
 for bp in gdb.breakpoints():
     bp.delete()
