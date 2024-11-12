@@ -14,7 +14,7 @@ calls = ["strcpy@plt", "strcpy", "gets@plt", "gets"]
 # find all possible addresses of the calls
 def find_all_addresses(call):
     info = gdb.execute("info functions " + call, to_string=True)
-    addresses = re.findall(r"0x[0-9a-f]+", info)
+    addresses = re.findall(r"0x[0-9a-fA-f]{8,16}", info)
     addresses = list(set(addresses)) # remove duplicates
     print("addresses found for", call, ":", addresses)
     return addresses
@@ -38,7 +38,10 @@ gdb.execute("r")
 for b in gdb.breakpoints():
 
     # some breakpoints may not be reached by the time the program is finished, early exit
-    if gdb.selected_frame() is None:
+    try:
+        if gdb.selected_frame() is None:
+            break
+    except gdb.error as e:
         break
 
     # ignore breakpoint is pending, i.e. did not find that call when made earlier
