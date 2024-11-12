@@ -35,7 +35,7 @@ for call in calls:
         pass
 
 # begin running
-gdb.execute("r")
+gdb.execute("r <<< input")
 
 # for each breakpoint, print bytes to overwrite return address
 for b in gdb.breakpoints():
