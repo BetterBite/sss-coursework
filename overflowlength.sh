@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# telling gdb to f off
+export DEBUGINFOD_URLS=""
+
 if [ "$#" -gt 3 ] || [ "$#" -lt 1 ]; then
     echo "Usage: <program to run in gdb> [python script to run alongside]"
     echo "       If no python script is provided, then \"detect_input_str_len.py\" will be used"
