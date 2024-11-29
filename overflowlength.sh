@@ -17,12 +17,12 @@ fi
 if [ "$#" -eq 1 ]; then
     program=$1
     offset=$(gdb -q -ex "source detect_input_str_len.py" --args $program | tail -n 1)
-    echo "Offset: $offset"
+    echo $offset
 fi
 
 if [ "$#" -eq 2 ]; then
     program=$1
     script=$2
     offset=$(gdb -q -ex "source $script" --args $program | tail -n 1)
-    echo "Offset: $offset"
+    echo $offset
 fi
