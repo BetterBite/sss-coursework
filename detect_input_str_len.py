@@ -20,8 +20,8 @@ def flip_endianness(address):
 # Cartesian product of the charset with itself 4 times
 # Edit length default to whatever the len of charset is
 # 62**4 is complete overkill.
-def cyclic(length=62**4):
-    charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+def cyclic(length=52**4):
+    charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     charset_length = len(charset)
     for i in range(length):
         p1 = i % charset_length
@@ -59,21 +59,21 @@ def execute_program(input_string) -> int:
             address = re.findall(r"Program stopped at 0x([0-9a-fA-f]{8,16})", status)[0]
             print("Address of the error: 0x" + address)
             offset = cyclic_find(address)*4
-            if offset == -1:
+            if offset <= -1:
                 print("Failed to find the offset for a plety amount of reasons")
             return offset
         else:
             print("Input did not cause an error!")
             return -1
     else:
-        gdb.execute("r < " + input_file_path, to_string=True)
+        gdb.execute("r " + input_file_path, to_string=True)
         status = gdb.execute("info program", to_string=True)
         if "SIGSEGV" in status:
             print("SIGSEGV was raised on input string")
             address = re.findall(r"Program stopped at 0x([0-9a-fA-f]{8,16})", status)[0]
             print("Address of the error: 0x" + address)
             offset = cyclic_find(address)*4
-            if offset == -1:
+            if offset <= -1:
                 print("Failed to find the offset for a plety amount of reasons")
             return offset
         else:
@@ -89,18 +89,18 @@ def execute_program(input_string) -> int:
 #    return addresses
 
 # input string to the program
-input_string = ''.join(cyclic(25))
+input_string = ''.join(cyclic(100))
 # change this as required
-input_file_path = "input"
+input_file_path = "input.txt"
 
 # pattern_create.rb does not work because ruby does not work because life sucks
 with open(input_file_path, "w") as f:
     f.write(input_string)
 
 offset = execute_program(input_string)
-if offset == -1:
+if offset <= -1:
     offset = execute_program(input_file_path)
-if offset == -1:
+if offset <= -1:
     print(-1)
     gdb.execute("quit")
 
