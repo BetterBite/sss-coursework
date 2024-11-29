@@ -33,6 +33,10 @@ def main(args):
 
         overflow_length = int(subprocess.check_output([f"./{minifuzzer_bash_filename}", program_name])[:-1])
 
+        if overflow_length == -1:
+            print("Could not automatically find overflow length.\nExitting.")
+            return
+
     else:
         if args.overflow_length < -1:
             print("Invalid buffer overflow length!\nExitting.")
