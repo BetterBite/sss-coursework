@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# telling gdb to f off
+# telling gdb to f off about debug info
 export DEBUGINFOD_URLS=""
 
 if [ "$#" -gt 3 ] || [ "$#" -lt 1 ]; then
@@ -16,11 +16,11 @@ fi
 
 if [ "$#" -eq 1 ]; then
     program=$1
-    gdb -ex "source detect_input_str_len.py" --args $program
+    gdb -q -ex "source detect_input_str_len.py" --args $program
 fi
 
 if [ "$#" -eq 2 ]; then
     program=$1
     script=$2
-    gdb -ex "source $script" --args $program
+    gdb -q -ex "source $script" --args $program
 fi

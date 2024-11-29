@@ -1,7 +1,25 @@
 import re
+#from pwn import cyclic, cyclic_find
+# Normally i would import pwn however, due to 100 million conda configurations and 50 million mamba configurations, i can't be arsed to fight it
+
+
+# disable the pagination line that shows when script is ran in other ways that "source script" within gdb
+# has no effect if ran (the script, that is) in gdb itself
+gdb.execute("set pagination off")
+# tells gdb to f off with confirmation prompts
+gdb.execute("set confirm off")
+
+# gotta flip the endianness of address because of stack bs
+def flip_endianness(address):
+    hex_str = format(address)
+    # Split the hexadecimal string into bytes and reverse the order
+    flipped_hex_str = ''.join(reversed([hex_str[i:i+2] for i in range(0, len(hex_str), 2)]))
+    return flipped_hex_str
+
 
 # Cartesian product of the charset with itself 4 times
 # Edit length default to whatever the len of charset is
+# 62**4 is complete overkill.
 def cyclic(length=62**4):
     charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     charset_length = len(charset)
@@ -11,41 +29,56 @@ def cyclic(length=62**4):
         p3 = (i // charset_length // charset_length) % charset_length
         p4 = (i // charset_length // charset_length // charset_length) % charset_length
         yield (
-            format(ord(charset[p4]), '02x') +
-            format(ord(charset[p3]), '02x') +
-            format(ord(charset[p2]), '02x') +
-            format(ord(charset[p1]), '02x')
+            charset[p1] +
+            charset[p2] +
+            charset[p3] +
+            charset[p4]
         )
 
-def cyclic_find(address):
+def cyclic_find(address) -> int:
+    print("This process is quite slow! Let it cook")
+    address = flip_endianness(address)
     cyclic_list = list(cyclic())
-    for i in cyclic_list:
-        print(i)
-        if int(i, 16) == address:
-            return cyclic_list.index(i)//4
+    for index, i in enumerate(cyclic_list):
+        #print(i)
+        hex_representation = ''.join(format(ord(char), '02x') for char in i)
+        #print("Comparing hex representation " + hex_representation, "with address " + address)
+        if hex_representation == address:
+            # problem #34: python implicit casting is very, very, very, stupid
+            return index
     return -1
 
 # runs the program with given input string and tries to catch any buffer overflow
-def execute_program(input_string):
+def execute_program(input_string) -> int:
     # treat anything that isn't the input_file_path as a string to be passed to the program
     if (input_string is not input_file_path):
-        try :
-            gdb.execute("r <<< " + input_string, to_string=True)
+        gdb.execute("r <<< " + input_string, to_string=True)
+        status = gdb.execute("info program", to_string=True)
+        if "SIGSEGV" in status:
+            print("SIGSEGV was raised on input string")
+            address = re.findall(r"Program stopped at 0x([0-9a-fA-f]{8,16})", status)[0]
+            print("Address of the error: 0x" + address)
+            offset = cyclic_find(address)*4
+            if offset == -1:
+                print("Failed to find the offset for a plety amount of reasons")
+            return offset
+        else:
             print("Input did not cause an error!")
-        except gdb.error as e:
-            print("Caught error:", e)
-            address = re.findall(r"0x[0-9a-fA-f]{8,16}", str(e)).group(0)
-            print("Address of the error:", address)
-            print(cyclic_find(int(address, 16)))
+            return -1
     else:
-        try:
-            gdb.execute("r < " + input_file_path, to_string=True)
-            print("File input did not cause an error!")
-        except gdb.error as e:
-            print("Caught error:", e)
-            address = re.findall(r"0x[0-9a-fA-f]{8,16}", str(e)).group(0)
-            print("Address of the error:", address)
-            print(cyclic_find(int(address, 16)))
+        gdb.execute("r < " + input_file_path, to_string=True)
+        status = gdb.execute("info program", to_string=True)
+        if "SIGSEGV" in status:
+            print("SIGSEGV was raised on input string")
+            address = re.findall(r"Program stopped at 0x([0-9a-fA-f]{8,16})", status)[0]
+            print("Address of the error: 0x" + address)
+            offset = cyclic_find(address)*4
+            if offset == -1:
+                print("Failed to find the offset for a plety amount of reasons")
+            return offset
+        else:
+            print("Input did not cause an error!")
+            return -1
 
 # find all possible addresses of the calls
 #def find_all_addresses(call):
@@ -55,24 +88,22 @@ def execute_program(input_string):
 #    print("addresses found for", call, ":", addresses)
 #    return addresses
 
-
-print("passed checkpoint 0")
 # input string to the program
-# TODO: make this binary ffs
-input_string = ''.join(cyclic(100))
-print("input string:", input_string)
+input_string = ''.join(cyclic(25))
+# change this as required
 input_file_path = "input"
-print("passed checkpoint 1")
 
 # pattern_create.rb does not work because ruby does not work because life sucks
-with open(input_file_path, "wb") as f:
+with open(input_file_path, "w") as f:
     f.write(input_string)
 
-print("passed checkpoint 2")
-# disable the pagination line that shows when script is ran in other ways that "source script" within gdb
-# has no effect if ran (the script, that is) in gdb itself
-gdb.execute("set pagination off")
+offset = execute_program(input_string)
+if offset == -1:
+    offset = execute_program(input_file_path)
+if offset == -1:
+    print("Could not find a buffer overflow in the given program.")
+    gdb.execute("quit")
 
-execute_program(input_string)
+print(offset)
 
 gdb.execute("quit")
