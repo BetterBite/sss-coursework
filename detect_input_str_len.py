@@ -101,7 +101,7 @@ offset = execute_program(input_string)
 if offset == -1:
     offset = execute_program(input_file_path)
 if offset == -1:
-    print("Could not find a buffer overflow in the given program.")
+    print(-1)
     gdb.execute("quit")
 
 print(offset)
